@@ -1,1 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudentsFreeHub - Free Global Jobs & Courses for Students</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f0f8ff; text-align: center; }
+        h1 { color: #007bff; margin-bottom: 10px; }
+        p { color: #666; }
+        .section { margin: 20px auto; padding: 15px; background: white; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); max-width: 600px; }
+        .item { border: 1px solid #ddd; margin: 10px 0; padding: 10px; text-align: left; border-radius: 5px; }
+        a { color: #007bff; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        #loading { color: #666; font-style: italic; }
+        @media (max-width: 600px) { body { margin: 10px; } }
+    </style>
+</head>
+<body>
+    <h1>StudentsFreeHub 🚀</h1>
+    <p>Auto-updating free internships, remote jobs, and courses worldwide – Powered by free APIs (Indeed & Coursera RSS, 2025 compliant).</p>
+    <div id="loading">Loading fresh data... (Takes 5-10 seconds on first load)</div>
+    <div id="jobs" class="section"><h2>Latest Remote Jobs & Internships</h2><div id="job-list"></div></div>
+    <div id="courses" class="section"><h2>Free Online Courses</h2><div id="course-list"></div></div>
+    <script>
+        // Fetch jobs: Indeed RSS (real-time, no API key; filters for internships/remote, latest 5)
+        fetch('https://rss.indeed.com/rss?q=internship+remote&l=&limit=5&format=xml-no-fallback&fromage=1&v=2&sort=date')
+            .then(r => r.text()).then(xml => {
+                const parser = new DOMParser(); const doc = parser.parseFromString(xml, 'text/xml');
+                const items = doc.querySelectorAll('item'); const list = document.getElementById('job-list');
+                if (items.length === 0) { list.innerHTML = '<p>No jobs found – try refresh.</p>'; return; }
+                list.innerHTML = ''; Array.from(items).slice(0,5).forEach(item => {
+                    const div = document.createElement('div'); div.className = 'item';
+                    div.innerHTML = `<strong>\( {item.querySelector('title')?.textContent || 'Untitled Job'}</strong><br><a href=" \){item.querySelector('link')?.textContent}" target="_blank">Apply Now</a><br><small>Updated: ${item.querySelector('pubDate')?.textContent || 'N/A'}</small>`;
+                    list.appendChild(div);
+                }); document.getElementById('loading').style.display = 'none';
+            }).catch(err => { console.error('Job fetch error:', err); document.getElementById('loading').innerText = 'Network issue – refresh page.'; });
 
+        // Fetch courses: Coursera free RSS (daily updates, top 5)
+        fetch('https://www.coursera.org/collections/free-courses.rss')
+            .then(r => r.text()).then(xml => {
+                const parser = new DOMParser(); const doc = parser.parseFromString(xml, 'text/xml');
+                const items = doc.querySelectorAll('item'); const list = document.getElementById('course-list');
+                if (items.length === 0) { list.innerHTML = '<p>No courses found.</p>'; return; }
+                list.innerHTML = ''; Array.from(items).slice(0,5).forEach(item => {
+                    const div = document.createElement('div'); div.className = 'item';
+                    div.innerHTML = `<strong>\( {item.querySelector('title')?.textContent || 'Untitled Course'}</strong><br><a href=" \){item.querySelector('link')?.textContent}" target="_blank">Enroll Free</a><br><small>Platform: Coursera | Duration: Varies</small>`;
+                    list.appendChild(div);
+                });
+            }).catch(err => { console.error('Course fetch error:', err); document.getElementById('course-list').innerHTML = '<p>Refresh for courses.</p>'; });
+
+        // Auto-refresh every 6 hours for updates (client-side, no server needed)
+        setInterval(() => location.reload(), 21600000); // 6 hours in ms
+    </script>
+</body>
+</html>
